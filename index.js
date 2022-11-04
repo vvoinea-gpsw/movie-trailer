@@ -53,7 +53,7 @@
 
 		/* Fetch a Movie ID for querying the TMDB API */
 
-		const endpoint = 'https://api.themoviedb.org' + encodeURI( '/3/search/movie?api_key=' + options.apiKey + '&query=' + search + ( ( options.year === null ) ? '' : '&year=' + options.year ) + ( ( options.language === null ) ? '' : '&language=' + options.language ) )
+		const endpoint = 'https://api.themoviedb.org' + encodeURI( '/3/search/' + options.videoType + '?api_key=' + options.apiKey + '&query=' + search + ( ( options.year === null ) ? '' : '&year=' + options.year ) + ( ( options.language === null ) ? '' : '&language=' + options.language ) )
 		const result = fetch( endpoint, {
 			method: 'GET'
 		} )
@@ -67,22 +67,21 @@
 					throw new TypeError( json.status_message )
 
 				} else if ( json.results.length === 0 ) {
-
+					
 					// Retry failed search without year
 					if ( options.year !== null ) {
-						
+
 						const { year, ...rest } = options
-						return getMovieId( search, rest);
+						return getMovieId( search, null, options.language )
 
 					}
 
 					// Error
-					throw new Error( `No TMDB Movie found with that search query, try searching https://www.themoviedb.org/search?query=${encodeURIComponent( search )} to verify one exists` )
+					throw new Error( `No TMDB Movie found with the current search terms, try searching https://www.themoviedb.org/search?query=${encodeURIComponent(search)}` )
 
 				} else {
-
 					return json.results[0].id
-
+					
 				}
 
 			} )
@@ -98,10 +97,10 @@
 
 	}
 
-	function getTrailer( movieId, options ) {
+	function getTrailer( movieId, options, videoType ) {
 
 		/* Fetch single or multiple movie trailers via the TMDB API */
-		const endpoint = 'https://api.themoviedb.org' + encodeURI( '/3/movie/' + movieId + '/videos?api_key=' + options.apiKey + ( ( options.language === null ) ? '' : '&language=' + options.language ) )
+		const endpoint = 'https://api.themoviedb.org' + encodeURI( '/3/' + videoType + '/' + movieId + '/videos?api_key=' + options.apiKey + ( ( options.language === null ) ? '' : '&language=' + options.language ) )
 		const result = fetch( endpoint, {
 			method: 'GET'
 		} )
@@ -112,14 +111,14 @@
 				if ( typeof ( json.status_message ) !== 'undefined' ) {
 
 					// Error
-					throw new TypeError( `movie-trailer: ${json.status_message}` )
+					throw Error( `movie-trailer: ${json.status_message}` )
 
 				}
 
 				if ( json.results.length === 0 ) {
 
 					// Error
-					throw new Error( 'No trailers found for that TMDB ID' )
+					throw Error( 'No trailers found for that TMDB ID' )
 
 				}
 
@@ -144,10 +143,8 @@
 			} )
 			.catch( error => {
 
-				handleErrors( error )
-
+				handleErrors(error)
 				return null
-
 			} )
 
 		return result
@@ -164,6 +161,7 @@
 			id: false,
 			year: null,
 			language: null,
+			vidoeType: options.videoType,
 
 			// Public Key on purpose
 			apiKey: '9d2bff12ed955c7f1f74b83187f188ae'
@@ -177,7 +175,7 @@
 
 		if ( typeof movie !== 'string' && !options.tmdbId ) {
 
-			throw new Error( 'Expected first parameter to be a movie or TMDB ID (string)' )
+			throw Error( 'Expected first parameter to be a movie or TMDB ID (string)' )
 
 		} else if ( typeof options === 'function' ) {
 
@@ -237,7 +235,7 @@
 		}
 
 		// Get the trailers themselves
-		const result = getTrailer( movieId, config )
+		const result = getTrailer( movieId, config, options.videoType )
 
 		if ( !result ) {
 
