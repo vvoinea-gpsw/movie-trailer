@@ -151,7 +151,7 @@
 
 	}
 
-	async function movieTrailer( movie, options, cb, legacy ) {
+	async function movieTrailer( movie, options = {videoType: "movie"}, cb, legacy ) {
 
 		/* Fetch movie trailers */
 
